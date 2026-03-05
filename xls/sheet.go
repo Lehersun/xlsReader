@@ -25,6 +25,20 @@ func (s *Sheet) GetName() string {
 	return s.boundSheet.GetName()
 }
 
+// HiddenState returns the visibility state from BOUNDSHEET grbit:
+// 0 = visible, 1 = hidden, 2 = very hidden.
+func (s *Sheet) HiddenState() uint8 {
+	if s.boundSheet == nil {
+		return 0
+	}
+	return s.boundSheet.Grbit[0] & 0x03
+}
+
+// IsHidden reports whether a sheet is hidden or very hidden.
+func (s *Sheet) IsHidden() bool {
+	return s.HiddenState() != 0
+}
+
 // Get row by index
 
 func (s *Sheet) GetRow(index int) (row *rw, err error) {
@@ -105,13 +119,13 @@ func (s *Sheet) read(stream []byte) (err error) { // nolint: gocyclo
 	point = int64(helpers.BytesToUint32(s.boundSheet.LbPlyPos[:]))
 	var sPoint int64
 	eof := false
-	records := make(map[string]string )
+	records := make(map[string]string)
 Next:
 
 	recordNumber := stream[point : point+2]
 	recordDataLength := int64(helpers.BytesToUint16(stream[point+2 : point+4]))
 	sPoint = point + 4
-	records[fmt.Sprintf("%x",recordNumber)]=fmt.Sprintf("%x",recordNumber)
+	records[fmt.Sprintf("%x", recordNumber)] = fmt.Sprintf("%x", recordNumber)
 	if bytes.Compare(recordNumber, record.AutofilterInfoRecord[:]) == 0 {
 		c := new(record.AutofilterInfo)
 		c.Read(stream[sPoint : sPoint+recordDataLength])
